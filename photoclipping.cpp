@@ -1,6 +1,8 @@
 #include "photoclipping.h"
 #include "ui_photoclipping.h"
 
+#define SAVEFLAG 0
+
 photoclipping::photoclipping(QWidget *parent) :
     QWidget(parent),
     settings(QDir::homePath()+"/photoClipping.ini", QSettings::IniFormat),
@@ -90,6 +92,11 @@ void photoclipping::onMouseMovedGraphicsImage(int x,int y ,Qt::MouseButton butto
         ui->label_axis->setText(QString("x:%1 y:%2").arg(x).arg(y));
         updatescene();
     }
+}
+
+void photoclipping::onMousePressdGraphicsImage(int x, int y, Qt::MouseButton button)
+{
+    ;
 }
 
 void photoclipping::onMouseReleasedGraphicImage(int x, int y ,Qt::MouseButton button)
@@ -294,7 +301,7 @@ void photoclipping::outputtxt()
     {
         std::ofstream ofs;
         ofs.open(QString(ui->comboSaveto->currentText() + "/YOLO_Annotations/" + YOLOimg_tmp[i].fn +".txt").toLocal8Bit(), std::ios_base::app);
-        QString str = QString("1 %1 %2 %3 %4").arg(YOLOimg_tmp[i].x).arg(YOLOimg_tmp[i].y).arg(YOLOimg_tmp[i].w).arg(YOLOimg_tmp[i].h);
+        QString str = QString("0 %1 %2 %3 %4").arg(YOLOimg_tmp[i].x).arg(YOLOimg_tmp[i].y).arg(YOLOimg_tmp[i].w).arg(YOLOimg_tmp[i].h);
         ofs << str.toStdString() << std::endl;
         ofs.close();
     }

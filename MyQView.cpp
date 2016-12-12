@@ -5,6 +5,15 @@ MyQView::MyQView(QWidget *parent)
     this->setMouseTracking(true);
 }
 
+void MyQView::mousePressEvent(QMouseEvent *eve)
+{
+    int x = eve->x();
+    int y = eve->y();
+    if(0 < x && x < this->width())
+        if(0 < y && y < this->height())
+            emit mousePressed(x,y,eve->button());
+
+}
 void MyQView::mouseReleaseEvent(QMouseEvent *eve)
 {
     int x = eve->x();

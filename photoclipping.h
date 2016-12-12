@@ -30,6 +30,7 @@ private slots:
     void onPushSaveto();
     void onMouseMovedGraphicsImage(int x, int y ,Qt::MouseButton button);
     void onMouseReleasedGraphicImage(int x, int y ,Qt::MouseButton button);
+    void onMousePressdGraphicsImage(int x, int y, Qt::MouseButton button);
     void onPushSkip();
     void onPushRevert();
     void currentIndexChangedLabel();

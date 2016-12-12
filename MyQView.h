@@ -13,8 +13,10 @@ public:
 signals:
     void mouseMoved(int x, int y, Qt::MouseButton button);
     void mouseReleased(int x, int y ,Qt::MouseButton button);
+    void mousePressed(int x, int y ,Qt::MouseButton button);
 protected:
     void mouseMoveEvent(QMouseEvent *eve);
+    void mousePressEvent(QMouseEvent *eve);
     void mouseReleaseEvent(QMouseEvent *eve);
 };
 
