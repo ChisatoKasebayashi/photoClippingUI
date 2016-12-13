@@ -235,16 +235,16 @@ int photoclipping::drawImage(QString filepath)
 
 void photoclipping::CorrectCoordinatesOfOutside(int &x, int &y)
 {
+/*
     x = (x >= ui->spinSize->value()/2) ?x:ui->spinSize->value()/2;
     y = (y >= ui->spinSize->value()/2) ?y:ui->spinSize->value()/2;
     x = (x < img_now.cols - ui->spinSize->value()/2) ?x:img_now.cols - ui->spinSize->value()/2-1;
     y = (y < img_now.rows - ui->spinSize->value()/2) ?y:img_now.rows - ui->spinSize->value()/2-1;
-/*
+*/
     x = (x >= 0) ?x:0;
     y = (y >= 0) ?y:0;
     x = (x < img_now.cols) ?x:img_now.cols-1;
     y = (y < img_now.rows) ?y:img_now.rows-1;
-*/
 }
 
 void photoclipping::photoSaveImage(cv::Mat src)
