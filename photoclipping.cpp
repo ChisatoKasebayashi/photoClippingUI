@@ -43,6 +43,7 @@ void photoclipping::connectSignals()
     connect(ui->pushSelectFolder, SIGNAL(clicked()), this, SLOT(onPushSelectFolder()));
     connect(ui->graphicsImage, SIGNAL(mouseMoved(int,int ,Qt::MouseButton)), this, SLOT(onMouseMovedGraphicsImage(int,int ,Qt::MouseButton)));
     connect(ui->graphicsImage, SIGNAL(mouseReleased(int,int, Qt::MouseButton)), this, SLOT(onMouseReleasedGraphicImage(int,int, Qt::MouseButton)));
+    connect(ui->graphicsImage, SIGNAL(mousePressed(int,int,Qt::MouseButton)), this, SLOT(onMousePressdGraphicsImage(int,int,Qt::MouseButton)));
     connect(ui->pushSkip, SIGNAL(clicked()), this, SLOT(onPushSkip()));
     connect(ui->pushRevert, SIGNAL(clicked()), this, SLOT(onPushRevert()));
     connect(ui->pushSaveto, SIGNAL(clicked()), this, SLOT(onPushSaveto()));
@@ -96,57 +97,48 @@ void photoclipping::onMouseMovedGraphicsImage(int x,int y ,Qt::MouseButton butto
 
 void photoclipping::onMousePressdGraphicsImage(int x, int y, Qt::MouseButton button)
 {
-    ;
+    if(ui->comboMethod->currentText() == "Rect")
+    {
+        cp_start.x = x;
+        cp_start.y = y;
+        cp_start.button = 1;
+    }
 }
 
 void photoclipping::onMouseReleasedGraphicImage(int x, int y ,Qt::MouseButton button)
 {
-    image_tmp tmp;
-    object_tmp tmp2;
-    yolo_tmp tmp3;
-    if(count < imglist.size() && button == Qt::LeftButton)
+    if(ui->comboMethod->currentText() == "Point")
     {
-        CorrectCoordinatesOfOutside(x,y);
-        scene.addRect(x - ui->spinSize->value()/2
-                      ,y - ui->spinSize->value()/2
-                      ,ui->spinSize->value(),ui->spinSize->value()
-                      ,QPen(QColor(255,0,0)));
-        points.push_back(QString("%1 %2 %3").arg(imglist[count].fileName()).arg(x).arg(y));
-        ui->labelPreview->setPixmap(myq.MatBGR2pixmap(img_now).copy(x - ui->spinSize->value()/2
-                                                                    ,y - ui->spinSize->value()/2
-                                                                    ,ui->spinSize->value(),ui->spinSize->value()));
-        cv::Mat clp(img_now,cv::Rect(x - ui->spinSize->value()/2, y - ui->spinSize->value()/2, ui->spinSize->value(),ui->spinSize->value()));
+        if(count < imglist.size() && button == Qt::LeftButton)
+        {
+            CorrectCoordinatesOfOutside(x,y);
+            scene.addRect(x - ui->spinSize->value()/2
+                          ,y - ui->spinSize->value()/2
+                          ,ui->spinSize->value(),ui->spinSize->value()
+                          ,QPen(QColor(255,0,0)));
+            points.push_back(QString("%1 %2 %3").arg(imglist[count].fileName()).arg(x).arg(y));
+            ui->labelPreview->setPixmap(myq.MatBGR2pixmap(img_now).copy(x - ui->spinSize->value()/2
+                                                                        ,y - ui->spinSize->value()/2
+                                                                        ,ui->spinSize->value(),ui->spinSize->value()));
+            cv::Mat clp(img_now,cv::Rect(x - ui->spinSize->value()/2, y - ui->spinSize->value()/2, ui->spinSize->value(),ui->spinSize->value()));
 
-        tmp.fn          = imglist[count].fileName();
-        tmp.fn.chop(4);
-        tmp.filename    = QString("Image filename : \"%1\"").arg(imglist[count].fileName());
-        tmp.size        = QString("Image size (X x Y x C) : %1 x %2 x %3").arg(img_now.cols).arg(img_now.rows).arg(img_now.channels());
-        tmp.database    = QString("Database : \"Ball detection network by CITBrains\"");
-        tmp.groundtruth = QString("Objects with ground truth : 1 { \"Ball\"}");
-
-        tmp2.label      = QString("Original label for object 1 \"Ball\" : \"2016Ball\"");
-        tmp2.center     = QString("Center point on object 1 \"Ball\" (X, Y) : (%1, %2)").arg(x).arg(y);
-        tmp2.box        = QString("Bounding box for object 1 \"Ball\" (Xmin, Ymin) - (Xmax, Ymax) : (%1, %2) - (%3, %4)")
-                .arg(x - ui->spinSize->value()/2)
-                .arg(y - ui->spinSize->value()/2)
-                .arg(x + ui->spinSize->value()/2)
-                .arg(y + ui->spinSize->value()/2);
-        tmp.obj_tmp.push_back(tmp2);
-        img_tmp.push_back(tmp);
-        tmp3.fn = imglist[count].fileName();
-        tmp3.fn.chop(4);
-        tmp3.x = (float)x/img_now.cols;
-        tmp3.y = (float)y/img_now.rows;
-        tmp3.w = (float)ui->spinSize->value()/img_now.cols;
-        tmp3.h = (float)ui->spinSize->value()/img_now.rows;
-        YOLOimg_tmp.push_back(tmp3);
+            AnnotationYOLO(0,x,y,ui->spinSize->value(), ui->spinSize->value());
+            AnnotationFRCNN("2016Ball", x - ui->spinSize->value()/2, y - ui->spinSize->value()/2, x + ui->spinSize->value()/2, y + ui->spinSize->value()/2);
 
 
-        photoSaveImage(clp);
+            photoSaveImage(clp);
+        }
+        else if(button == Qt::RightButton)
+        {
+            onPushSkip();
+        }
     }
-    else if(button == Qt::RightButton)
+    if(ui->comboMethod->currentText() == "Rect")
     {
-        onPushSkip();
+        if(cp_start.button == 1)
+        {
+            cp_start.button = 0;
+        }
     }
 }
 
@@ -154,23 +146,35 @@ void photoclipping::updatescene()
 {
     scene.clear();
     drawImage(imglist[count].filePath());
-    scene.addRect(c_point.x - ui->spinSize->value()/2
-                  ,c_point.y - ui->spinSize->value()/2
-                  ,ui->spinSize->value(),ui->spinSize->value()
-                  ,QPen(QColor(255,0,0)));
-    scene.addLine(c_point.x-5, c_point.y, c_point.x+5, c_point.y,QPen(QColor(255,0,0)));
-    scene.addLine(c_point.x,c_point.y-5, c_point.x, c_point.y+5, QPen(QColor(255,0,0)));
-    scene.addEllipse(c_point.x-ui->spinSize->value()/2,c_point.y-ui->spinSize->value()/2,ui->spinSize->value(),ui->spinSize->value(),QPen(QColor(100,150,250),2));
-    if(ui->spinSize->value()==2)
+    if(ui->comboMethod->currentText() == "Point")
     {
-        scene.addLine(c_point.x-80, c_point.y, c_point.x+80, c_point.y,QPen(QColor(100,150,250)));
-        scene.addLine(c_point.x,c_point.y-80, c_point.x, c_point.y+80, QPen(QColor(100,150,250)));
-        scene.addLine(c_point.x-80, c_point.y-80, c_point.x+80, c_point.y+80,QPen(QColor(100,150,250)));
-        scene.addLine(c_point.x-80,c_point.y+80, c_point.x+80, c_point.y-80, QPen(QColor(100,150,250)));
+        scene.addRect(c_point.x - ui->spinSize->value()/2
+                      ,c_point.y - ui->spinSize->value()/2
+                      ,ui->spinSize->value(),ui->spinSize->value()
+                      ,QPen(QColor(255,0,0)));
+        scene.addLine(c_point.x-5, c_point.y, c_point.x+5, c_point.y,QPen(QColor(255,0,0)));
+        scene.addLine(c_point.x,c_point.y-5, c_point.x, c_point.y+5, QPen(QColor(255,0,0)));
+        scene.addEllipse(c_point.x-ui->spinSize->value()/2,c_point.y-ui->spinSize->value()/2,ui->spinSize->value(),ui->spinSize->value(),QPen(QColor(100,150,250),2));
+        if(ui->spinSize->value()==2)
+        {
+            scene.addLine(c_point.x-80, c_point.y, c_point.x+80, c_point.y,QPen(QColor(100,150,250)));
+            scene.addLine(c_point.x,c_point.y-80, c_point.x, c_point.y+80, QPen(QColor(100,150,250)));
+            scene.addLine(c_point.x-80, c_point.y-80, c_point.x+80, c_point.y+80,QPen(QColor(100,150,250)));
+            scene.addLine(c_point.x-80,c_point.y+80, c_point.x+80, c_point.y-80, QPen(QColor(100,150,250)));
+        }
+        ui->labelPreview->setPixmap(myq.MatBGR2pixmap(img_now).copy(c_point.x - ui->spinSize->value()/2
+                                                                    ,c_point.y - ui->spinSize->value()/2
+                                                                    ,ui->spinSize->value(),ui->spinSize->value()));
     }
-    ui->labelPreview->setPixmap(myq.MatBGR2pixmap(img_now).copy(c_point.x - ui->spinSize->value()/2
-                                                                ,c_point.y - ui->spinSize->value()/2
-                                                                ,ui->spinSize->value(),ui->spinSize->value()));
+    if(ui->comboMethod->currentText() == "Rect")
+    {
+        ui->labelPreview->setText("Rect Mode");
+        scene.addEllipse(c_point.x, c_point.y, 2, 2, QPen(QColor(255,0,0),3));
+        if(cp_start.button == 1)
+        {
+            scene.addRect(QRect(QPoint(cp_start.x, cp_start.y), QPoint(c_point.x,c_point.y)),QPen(QColor(255,0,0),2));
+        }
+    }
 }
 
 void photoclipping::onPushSkip()
@@ -268,6 +272,38 @@ void photoclipping::photoSaveImage(cv::Mat src)
         ui->labelImageNum->setText(QString("%1 / %2").arg(imglist.size()-count).arg(imglist.size()));
     }
 }
+
+void photoclipping::AnnotationYOLO(int c, double cx, double cy, double w ,double h)
+{
+    yolo_tmp tmp3;
+    tmp3.fn = imglist[count].fileName();
+    tmp3.fn.chop(4);
+    tmp3.x = (float)cx/img_now.cols;
+    tmp3.y = (float)cy/img_now.rows;
+    tmp3.w = (float)w/img_now.cols;
+    tmp3.h = (float)h/img_now.rows;
+    YOLOimg_tmp.push_back(tmp3);
+}
+
+void photoclipping::AnnotationFRCNN(QString objectName, int x1, int y1, int x2, int y2)
+{
+    image_tmp tmp;
+    object_tmp tmp2;
+
+    tmp.fn          = imglist[count].fileName();
+    tmp.fn.chop(4);
+    tmp.filename    = QString("Image filename : \"%1\"").arg(imglist[count].fileName());
+    tmp.size        = QString("Image size (X x Y x C) : %1 x %2 x %3").arg(img_now.cols).arg(img_now.rows).arg(img_now.channels());
+    tmp.database    = QString("Database : \"RoboCup Soccer Object Detection by CITBrains\"");
+    tmp.groundtruth = QString("Objects with ground truth : 1 { \"%1\"}");
+
+    tmp2.label      = QString("Original label for object 1 \"Ball\" : \"%1\"").arg(objectName);
+    tmp2.center     = QString("Center point on object 1 \"Ball\" (X, Y) : (%1, %2)").arg((x1+x2)/2).arg((y1+y2)/2);
+    tmp2.box        = QString("Bounding box for object 1 \"Ball\" (Xmin, Ymin) - (Xmax, Ymax) : (%1, %2) - (%3, %4)").arg(x1).arg(y1).arg(x2).arg(y2);
+    tmp.obj_tmp.push_back(tmp2);
+    img_tmp.push_back(tmp);
+}
+
 
 void photoclipping::outputtxt()
 {

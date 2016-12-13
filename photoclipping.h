@@ -48,6 +48,8 @@ private:
     std::vector<QString> RecentImg;
     QSettings settings;
     std::vector<QString> points;
+    void AnnotationYOLO(int c, double cx, double cy, double w ,double h);
+    void AnnotationFRCNN(QString objectName, int x1, int y1, int x2, int y2);
     struct object_tmp
     {
         QString label;
@@ -78,7 +80,9 @@ private:
     {
         int x;
         int y;
+        int button;
     }c_point;
+    cursur_point cp_start;
     QDir working_directory;
     void updatescene();
 };
