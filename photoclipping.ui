@@ -20,7 +20,7 @@
    <string>photoclipping</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_3">
-   <item row="6" column="0">
+   <item row="5" column="0">
     <widget class="QLabel" name="labelImageNum">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -64,57 +64,6 @@
       </widget>
      </item>
     </layout>
-   </item>
-   <item row="4" column="1" rowspan="3">
-    <widget class="QFrame" name="frame">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_2">
-      <item row="0" column="0">
-       <widget class="QPushButton" name="pushRevert">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="text">
-         <string>Revert</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QPushButton" name="pushSkip">
-        <property name="text">
-         <string>Skip</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item row="5" column="0">
-    <widget class="QLabel" name="label_2">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="text">
-      <string> *** Left Click-&gt;Save | Right Click-&gt;Skip ***</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignCenter</set>
-     </property>
-    </widget>
    </item>
    <item row="1" column="0" colspan="2">
     <widget class="QLabel" name="labelFilename">
@@ -164,10 +113,85 @@
      </layout>
     </widget>
    </item>
-   <item row="2" column="1" rowspan="2">
+   <item row="4" column="0">
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QPushButton" name="pushBack">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>50</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Back</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushNext">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>50</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Next</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="2" column="1" rowspan="3">
     <layout class="QVBoxLayout" name="verticalLayout_3">
      <item>
+      <widget class="QLabel" name="label_2">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Method:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QComboBox" name="comboMethod">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>40</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>14</pointsize>
+        </font>
+       </property>
        <item>
         <property name="text">
          <string>Point</string>
@@ -178,6 +202,19 @@
          <string>Rect</string>
         </property>
        </item>
+      </widget>
+     </item>
+     <item>
+      <widget class="Line" name="line">
+       <property name="frameShadow">
+        <enum>QFrame::Sunken</enum>
+       </property>
+       <property name="lineWidth">
+        <number>3</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
       </widget>
      </item>
      <item>
@@ -238,27 +275,22 @@
        </property>
        <item>
         <property name="text">
-         <string>ball</string>
+         <string>Ball</string>
         </property>
        </item>
        <item>
         <property name="text">
-         <string>field</string>
+         <string>Goalpost</string>
         </property>
        </item>
        <item>
         <property name="text">
-         <string>goalpole</string>
+         <string>Robot</string>
         </property>
        </item>
        <item>
         <property name="text">
-         <string>whiteline</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>robots</string>
+         <string>WhiteLine</string>
         </property>
        </item>
       </widget>

@@ -15,11 +15,13 @@ TEMPLATE = app
 SOURCES += main.cpp\
         photoclipping.cpp \
     MyQclass.cpp \
-    MyQView.cpp
+    MyQView.cpp \
+    Annotations.cpp
 
 HEADERS  += photoclipping.h \
     MyQclass.h \
-    MyQView.h
+    MyQView.h \
+    Annotations.h
 
 FORMS    += photoclipping.ui
 

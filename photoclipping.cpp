@@ -23,8 +23,7 @@ photoclipping::photoclipping(QWidget *parent) :
         settings.remove("SAVEDIR");
         ui->comboSaveto->insertItem(0, saveto);
         ui->comboSaveto->setCurrentIndex(0);
-        myq.makeDirectory(saveto, "Annotations");
-        myq.makeDirectory(saveto, "YOLO_Annotations");
+        annos = new Annotations(QDir(saveto));
     }
     currentIndexChangedLabel();
 }
@@ -44,8 +43,8 @@ void photoclipping::connectSignals()
     connect(ui->graphicsImage, SIGNAL(mouseMoved(int,int ,Qt::MouseButton)), this, SLOT(onMouseMovedGraphicsImage(int,int ,Qt::MouseButton)));
     connect(ui->graphicsImage, SIGNAL(mouseReleased(int,int, Qt::MouseButton)), this, SLOT(onMouseReleasedGraphicImage(int,int, Qt::MouseButton)));
     connect(ui->graphicsImage, SIGNAL(mousePressed(int,int,Qt::MouseButton)), this, SLOT(onMousePressdGraphicsImage(int,int,Qt::MouseButton)));
-    connect(ui->pushSkip, SIGNAL(clicked()), this, SLOT(onPushSkip()));
-    connect(ui->pushRevert, SIGNAL(clicked()), this, SLOT(onPushRevert()));
+    connect(ui->pushNext, SIGNAL(clicked()), this, SLOT(onPushNext()));
+    connect(ui->pushBack, SIGNAL(clicked()), this, SLOT(onPushBack()));
     connect(ui->pushSaveto, SIGNAL(clicked()), this, SLOT(onPushSaveto()));
     connect(ui->comboLabel, SIGNAL(currentIndexChanged(int)),this, SLOT(currentIndexChangedLabel()));
 }
@@ -81,6 +80,7 @@ void photoclipping::setFileList(QString dirpath)
         drawImage(imglist[count].filePath());
     }
     RecentImg.resize(imglist.size());
+    ui->labelImageNum->setText(QString("%1 / %2").arg(imglist.size()).arg(imglist.size()));
 }
 
 void photoclipping::onMouseMovedGraphicsImage(int x,int y ,Qt::MouseButton button)
@@ -112,31 +112,51 @@ void photoclipping::onMouseReleasedGraphicImage(int x, int y ,Qt::MouseButton bu
         if(count < imglist.size() && button == Qt::LeftButton)
         {
             CorrectCoordinatesOfOutside(x,y);
-            scene.addRect(x - ui->spinSize->value()/2
+/*            scene.addRect(x - ui->spinSize->value()/2
                           ,y - ui->spinSize->value()/2
                           ,ui->spinSize->value(),ui->spinSize->value()
-                          ,QPen(QColor(255,0,0)));
+                          ,QPen(QColor(255,0,0))
+                          );
+
             points.push_back(QString("%1 %2 %3").arg(imglist[count].fileName()).arg(x).arg(y));
             ui->labelPreview->setPixmap(myq.MatBGR2pixmap(img_now).copy(x - ui->spinSize->value()/2
                                                                         ,y - ui->spinSize->value()/2
-                                                                        ,ui->spinSize->value(),ui->spinSize->value()));
-            cv::Mat clp(img_now,cv::Rect(x - ui->spinSize->value()/2, y - ui->spinSize->value()/2, ui->spinSize->value(),ui->spinSize->value()));
-
-            AnnotationYOLO(0,x,y,ui->spinSize->value(), ui->spinSize->value());
-            AnnotationFRCNN("2016Ball", x - ui->spinSize->value()/2, y - ui->spinSize->value()/2, x + ui->spinSize->value()/2, y + ui->spinSize->value()/2);
-
-
-            photoSaveImage(clp);
+                                                                        ,ui->spinSize->value(),ui->spinSize->value())
+                                        );
+            cv::Mat clp(img_now,cv::Rect(x - ui->spinSize->value()/2
+                                         , y - ui->spinSize->value()/2
+                                         , ui->spinSize->value()
+                                         ,ui->spinSize->value())
+                        );
+            int cls = ui->comboLabel->currentIndex();
+            photoSaveImage(clp);            
+*/
+            object_bbox bbox;
+            bbox.cls = ui->comboLabel->currentIndex();
+            bbox.name= ui->comboLabel->currentText();
+            bbox.x1 = x - ui->spinSize->value()/2;
+            bbox.y1 = y - ui->spinSize->value()/2;
+            bbox.x2 = x + ui->spinSize->value()/2;
+            bbox.y2 = y + ui->spinSize->value()/2;
+            boxes.push_back(bbox);
         }
         else if(button == Qt::RightButton)
         {
-            onPushSkip();
+            onPushNext();
         }
     }
     if(ui->comboMethod->currentText() == "Rect")
     {
         if(cp_start.button == 1)
         {
+            object_bbox bbox;
+            bbox.cls = ui->comboLabel->currentIndex();
+            bbox.name= ui->comboLabel->currentText();
+            bbox.x1 = x < cp_start.x ?x :cp_start.x;
+            bbox.y1 = y < cp_start.y ?y :cp_start.y;
+            bbox.x2 = x < cp_start.x ?cp_start.x :x;
+            bbox.y2 = y < cp_start.y ?cp_start.y :y;
+            boxes.push_back(bbox);
             cp_start.button = 0;
         }
     }
@@ -154,7 +174,10 @@ void photoclipping::updatescene()
                       ,QPen(QColor(255,0,0)));
         scene.addLine(c_point.x-5, c_point.y, c_point.x+5, c_point.y,QPen(QColor(255,0,0)));
         scene.addLine(c_point.x,c_point.y-5, c_point.x, c_point.y+5, QPen(QColor(255,0,0)));
-        scene.addEllipse(c_point.x-ui->spinSize->value()/2,c_point.y-ui->spinSize->value()/2,ui->spinSize->value(),ui->spinSize->value(),QPen(QColor(100,150,250),2));
+        scene.addEllipse(c_point.x-ui->spinSize->value()/2
+                         ,c_point.y-ui->spinSize->value()/2
+                         ,ui->spinSize->value(),ui->spinSize->value()
+                         ,QPen(QColor(100,150,250),2));
         if(ui->spinSize->value()==2)
         {
             scene.addLine(c_point.x-80, c_point.y, c_point.x+80, c_point.y,QPen(QColor(100,150,250)));
@@ -169,51 +192,72 @@ void photoclipping::updatescene()
     if(ui->comboMethod->currentText() == "Rect")
     {
         ui->labelPreview->setText("Rect Mode");
-        scene.addEllipse(c_point.x, c_point.y, 2, 2, QPen(QColor(255,0,0),3));
+        scene.addEllipse(c_point.x, c_point.y, 2, 2, QPen(QColor(Qt::yellow),3));
         if(cp_start.button == 1)
         {
-            scene.addRect(QRect(QPoint(cp_start.x, cp_start.y), QPoint(c_point.x,c_point.y)),QPen(QColor(255,0,0),2));
+            scene.addRect(QRect(QPoint(cp_start.x, cp_start.y), QPoint(c_point.x,c_point.y)),QPen(Qt::yellow,2));
         }
+    }
+    for(int i=0; i<boxes.size();i++)
+    {
+        int r = ((boxes[i].cls+1)%3)==1 ?255:0;
+        int g = ((boxes[i].cls+2)%3)==1 ?255:0;
+        int b = ((boxes[i].cls+3)%3)==1 ?255:0;
+        if(boxes[i].cls > 2)
+        {
+            r = r/(boxes[i].cls+3/3);
+            g = g/(boxes[i].cls+3/3);
+            b = b/(boxes[i].cls+3/3);
+        }
+        scene.addRect(QRect(QPoint(boxes[i].x1, boxes[i].y1),QPoint(boxes[i].x2,boxes[i].y2)),QPen(QColor(r,g,b),2));
+        //scene.addText(boxes[i].name,QFont("Arial",12,QFont::Bold));
     }
 }
 
-void photoclipping::onPushSkip()
+void photoclipping::onPushNext()
 {
     count++;
     if(count < imglist.size())
     {
         RecentImg.clear();
         drawImage(imglist[count].filePath());
-        ui->labelImageNum->setText(QString("%1 / %2").arg(imglist.size()-count).arg(imglist.size()));
-        points.push_back(QString("%1 %2 %3").arg(imglist[count-1].fileName()).arg(-1).arg(-1));
+        ui->labelImageNum->setText(QString("%1 / %2")
+                                   .arg(imglist.size()-count)
+                                   .arg(imglist.size())
+                                   );
     }
     else
     {
         scene.clear();
         ui->labelPreview->setText("exit");
-        ui->labelImageNum->setText(QString("%1 / %2").arg(imglist.size()-count).arg(imglist.size()));
+        ui->labelImageNum->setText(QString("%1 / %2")
+                                   .arg(imglist.size()-count)
+                                   .arg(imglist.size())
+                                   );
     }
-    ui->pushRevert->setEnabled(TRUE);
+    ui->pushBack->setEnabled(TRUE);
+    boxes.clear();
 }
 
-void photoclipping::onPushRevert()
+void photoclipping::onPushBack()
 {
     count--;
     if(count <= 0)
     {
-        ui->pushRevert->setDisabled(TRUE);
+        ui->pushBack->setDisabled(TRUE);
         count=0;
     }
     else if(count > imglist.size()+1)
     {
-        ui->pushRevert->setDisabled(TRUE);
+        ui->pushBack->setDisabled(TRUE);
     }
     else
     {
         QFile::remove(RecentImg[count]);
-        points.pop_back();
+        annos->popBack();
         drawImage(imglist[count].filePath());
     }
+    boxes.clear();
 }
 
 void photoclipping::currentIndexChangedLabel()
@@ -259,7 +303,7 @@ void photoclipping::photoSaveImage(cv::Mat src)
     qDebug() << "Saved :" << RecentImg[count];
     count++;
     save_count++;
-    ui->pushRevert->setEnabled(TRUE);
+    ui->pushBack->setEnabled(TRUE);
     if(count < imglist.size())
     {
         drawImage(imglist[count].filePath());
@@ -273,74 +317,9 @@ void photoclipping::photoSaveImage(cv::Mat src)
     }
 }
 
-void photoclipping::AnnotationYOLO(int c, double cx, double cy, double w ,double h)
-{
-    yolo_tmp tmp3;
-    tmp3.fn = imglist[count].fileName();
-    tmp3.fn.chop(4);
-    tmp3.x = (float)cx/img_now.cols;
-    tmp3.y = (float)cy/img_now.rows;
-    tmp3.w = (float)w/img_now.cols;
-    tmp3.h = (float)h/img_now.rows;
-    YOLOimg_tmp.push_back(tmp3);
-}
-
-void photoclipping::AnnotationFRCNN(QString objectName, int x1, int y1, int x2, int y2)
-{
-    image_tmp tmp;
-    object_tmp tmp2;
-
-    tmp.fn          = imglist[count].fileName();
-    tmp.fn.chop(4);
-    tmp.filename    = QString("Image filename : \"%1\"").arg(imglist[count].fileName());
-    tmp.size        = QString("Image size (X x Y x C) : %1 x %2 x %3").arg(img_now.cols).arg(img_now.rows).arg(img_now.channels());
-    tmp.database    = QString("Database : \"RoboCup Soccer Object Detection by CITBrains\"");
-    tmp.groundtruth = QString("Objects with ground truth : 1 { \"%1\"}");
-
-    tmp2.label      = QString("Original label for object 1 \"Ball\" : \"%1\"").arg(objectName);
-    tmp2.center     = QString("Center point on object 1 \"Ball\" (X, Y) : (%1, %2)").arg((x1+x2)/2).arg((y1+y2)/2);
-    tmp2.box        = QString("Bounding box for object 1 \"Ball\" (Xmin, Ymin) - (Xmax, Ymax) : (%1, %2) - (%3, %4)").arg(x1).arg(y1).arg(x2).arg(y2);
-    tmp.obj_tmp.push_back(tmp2);
-    img_tmp.push_back(tmp);
-}
-
-
 void photoclipping::outputtxt()
 {
-    std::ofstream ofs;
-    ofs.open(QString(ui->comboSaveto->currentText() + "/points.txt").toLocal8Bit(), std::ios_base::app);
-    for(int i=0; i<points.size(); i++)
-    {
-        ofs << points[i].toStdString() << std::endl;
-    }
-    ofs.close();
-
-    qDebug() << " --- Step Annotations ---(" << img_tmp.size() << ")";
-    for(int i=0; i<img_tmp.size();i++)
-    {
-        std::ofstream ofs;
-        ofs.open(QString(ui->comboSaveto->currentText() + "/Annotations/" + img_tmp[i].fn +".txt").toLocal8Bit(), std::ios_base::app);
-        ofs << img_tmp[i].filename.toStdString() << std::endl;
-        ofs << img_tmp[i].size.toStdString() << std::endl;
-        ofs << img_tmp[i].database.toStdString() << std::endl;
-        ofs << img_tmp[i].groundtruth.toStdString() << std::endl;
-        for(int j=0; j<img_tmp[i].obj_tmp.size();j++)
-        {
-            ofs << img_tmp[i].obj_tmp[j].label.toStdString() << std::endl;
-            ofs << img_tmp[i].obj_tmp[j].center.toStdString() << std::endl;
-            ofs << img_tmp[i].obj_tmp[j].box.toStdString() << std::endl;
-        }
-        ofs.close();
-    }
-    qDebug() << " --- Step YOLO_Annotations ---(" << YOLOimg_tmp.size() << ")";
-    for(int i=0; i<YOLOimg_tmp.size();i++)
-    {
-        std::ofstream ofs;
-        ofs.open(QString(ui->comboSaveto->currentText() + "/YOLO_Annotations/" + YOLOimg_tmp[i].fn +".txt").toLocal8Bit(), std::ios_base::app);
-        QString str = QString("0 %1 %2 %3 %4").arg(YOLOimg_tmp[i].x).arg(YOLOimg_tmp[i].y).arg(YOLOimg_tmp[i].w).arg(YOLOimg_tmp[i].h);
-        ofs << str.toStdString() << std::endl;
-        ofs.close();
-    }
+    annos->flashAll();
 }
 
 void photoclipping::wheelEvent(QWheelEvent *pEvent)

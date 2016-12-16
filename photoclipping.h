@@ -8,6 +8,7 @@
 #include <QGraphicsScene>
 #include <QSettings>
 #include <fstream>
+#include <Annotations.h>
 
 namespace Ui {
 class photoclipping;
@@ -31,8 +32,8 @@ private slots:
     void onMouseMovedGraphicsImage(int x, int y ,Qt::MouseButton button);
     void onMouseReleasedGraphicImage(int x, int y ,Qt::MouseButton button);
     void onMousePressdGraphicsImage(int x, int y, Qt::MouseButton button);
-    void onPushSkip();
-    void onPushRevert();
+    void onPushNext();
+    void onPushBack();
     void currentIndexChangedLabel();
 
 private:
@@ -48,33 +49,6 @@ private:
     std::vector<QString> RecentImg;
     QSettings settings;
     std::vector<QString> points;
-    void AnnotationYOLO(int c, double cx, double cy, double w ,double h);
-    void AnnotationFRCNN(QString objectName, int x1, int y1, int x2, int y2);
-    struct object_tmp
-    {
-        QString label;
-        QString center;
-        QString box;
-    };
-    struct image_tmp
-    {
-        QString fn;
-        QString filename;
-        QString size;
-        QString database;
-        QString groundtruth;
-        std::vector<object_tmp> obj_tmp;
-    };
-    struct yolo_tmp
-    {
-        QString fn;
-        float x;
-        float y;
-        float w;
-        float h;
-    };
-    std::vector<yolo_tmp> YOLOimg_tmp;
-    std::vector<image_tmp> img_tmp;
     void wheelEvent(QWheelEvent *pEvent);
     struct cursur_point
     {
@@ -82,9 +56,20 @@ private:
         int y;
         int button;
     }c_point;
+    struct object_bbox
+    {
+        QString name;
+        int cls;
+        int x1;
+        int y1;
+        int x2;
+        int y2;
+    };
+    std::vector<object_bbox> boxes;
     cursur_point cp_start;
     QDir working_directory;
     void updatescene();
+    Annotations *annos;
 };
 
 #endif // PHOTOCLIPPING_H
