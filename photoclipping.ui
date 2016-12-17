@@ -250,16 +250,6 @@
          <string>Goalpost</string>
         </property>
        </item>
-       <item>
-        <property name="text">
-         <string>Robot</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>WhiteLine</string>
-        </property>
-       </item>
       </widget>
      </item>
      <item>
