@@ -18,8 +18,8 @@ public:
     bool YOLO;
     bool FasterRCNN;
     bool SSD;
-    void addObject(QString filename, int cls, float cx, float cy, float w, float h);
-    void addObject(QString objectName, int x1, int y1, int x2, int y2);
+    void addObject(int cls, float cx, float cy, float w, float h);
+    void addObject(QString objectName,int cls, int x1, int y1, int x2, int y2);
     void setHeader(cv::Mat src, QString imgname, std::vector<QString> labels);
     void pushBack();
     void popBack();

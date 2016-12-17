@@ -34,7 +34,7 @@ private slots:
     void onMousePressdGraphicsImage(int x, int y, Qt::MouseButton button);
     void onPushNext();
     void onPushBack();
-    void currentIndexChangedLabel();
+    void onPushClear();
 
 private:
     Ui::photoclipping *ui;

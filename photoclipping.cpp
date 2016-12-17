@@ -24,8 +24,13 @@ photoclipping::photoclipping(QWidget *parent) :
         ui->comboSaveto->insertItem(0, saveto);
         ui->comboSaveto->setCurrentIndex(0);
         annos = new Annotations(QDir(saveto));
+        std::vector<QString> labels;
+        for(int i=0;i<ui->comboLabel->count();i++)
+        {
+            labels.push_back(ui->comboLabel->itemText(i));
+        }
+        annos->setHeader(img_now,imglist[count].fileName(),labels);
     }
-    currentIndexChangedLabel();
 }
 
 photoclipping::~photoclipping()
@@ -35,6 +40,7 @@ photoclipping::~photoclipping()
     settings.setValue("IMAGEDIR",ui->lineSelectFolder->text());
     settings.setValue("SAVECOUNT",count);
     delete ui;
+    delete annos;
 }
 
 void photoclipping::connectSignals()
@@ -45,6 +51,7 @@ void photoclipping::connectSignals()
     connect(ui->graphicsImage, SIGNAL(mousePressed(int,int,Qt::MouseButton)), this, SLOT(onMousePressdGraphicsImage(int,int,Qt::MouseButton)));
     connect(ui->pushNext, SIGNAL(clicked()), this, SLOT(onPushNext()));
     connect(ui->pushBack, SIGNAL(clicked()), this, SLOT(onPushBack()));
+    connect(ui->pushClear, SIGNAL(clicked()), this, SLOT(onPushClear()));
     connect(ui->pushSaveto, SIGNAL(clicked()), this, SLOT(onPushSaveto()));
     connect(ui->comboLabel, SIGNAL(currentIndexChanged(int)),this, SLOT(currentIndexChangedLabel()));
 }
@@ -64,9 +71,7 @@ void photoclipping::onPushSaveto()
     QDir dir = myq.selectDir();
     ui->comboSaveto->insertItem(0,dir.path());
     ui->comboSaveto->setCurrentIndex(0);
-    currentIndexChangedLabel();
-    myq.makeDirectory(dir.path(), "Annotations");
-    myq.makeDirectory(dir.path(), "YOLO_Annotations");
+    annos = new Annotations(dir);
 }
 
 void photoclipping::setFileList(QString dirpath)
@@ -112,32 +117,19 @@ void photoclipping::onMouseReleasedGraphicImage(int x, int y ,Qt::MouseButton bu
         if(count < imglist.size() && button == Qt::LeftButton)
         {
             CorrectCoordinatesOfOutside(x,y);
-/*            scene.addRect(x - ui->spinSize->value()/2
-                          ,y - ui->spinSize->value()/2
-                          ,ui->spinSize->value(),ui->spinSize->value()
-                          ,QPen(QColor(255,0,0))
-                          );
-
-            points.push_back(QString("%1 %2 %3").arg(imglist[count].fileName()).arg(x).arg(y));
-            ui->labelPreview->setPixmap(myq.MatBGR2pixmap(img_now).copy(x - ui->spinSize->value()/2
-                                                                        ,y - ui->spinSize->value()/2
-                                                                        ,ui->spinSize->value(),ui->spinSize->value())
-                                        );
-            cv::Mat clp(img_now,cv::Rect(x - ui->spinSize->value()/2
-                                         , y - ui->spinSize->value()/2
-                                         , ui->spinSize->value()
-                                         ,ui->spinSize->value())
-                        );
-            int cls = ui->comboLabel->currentIndex();
-            photoSaveImage(clp);            
-*/
             object_bbox bbox;
+            int x1 = x - ui->spinSize->value()/2;
+            int y1 = y - ui->spinSize->value()/2;
+            int x2 = x + ui->spinSize->value()/2;
+            int y2 = y + ui->spinSize->value()/2;
+            CorrectCoordinatesOfOutside(x1,y1);
+            CorrectCoordinatesOfOutside(x2,y2);
             bbox.cls = ui->comboLabel->currentIndex();
             bbox.name= ui->comboLabel->currentText();
-            bbox.x1 = x - ui->spinSize->value()/2;
-            bbox.y1 = y - ui->spinSize->value()/2;
-            bbox.x2 = x + ui->spinSize->value()/2;
-            bbox.y2 = y + ui->spinSize->value()/2;
+            bbox.x1 = x1;
+            bbox.y1 = y1;
+            bbox.x2 = x2;
+            bbox.y2 = y2;
             boxes.push_back(bbox);
         }
         else if(button == Qt::RightButton)
@@ -150,16 +142,23 @@ void photoclipping::onMouseReleasedGraphicImage(int x, int y ,Qt::MouseButton bu
         if(cp_start.button == 1)
         {
             object_bbox bbox;
+            int x1 = x < cp_start.x ?x :cp_start.x;
+            int y1 = y < cp_start.y ?y :cp_start.y;
+            int x2 = x < cp_start.x ?cp_start.x :x;
+            int y2 = y < cp_start.y ?cp_start.y :y;
+            CorrectCoordinatesOfOutside(x1,y1);
+            CorrectCoordinatesOfOutside(x2,y2);
             bbox.cls = ui->comboLabel->currentIndex();
             bbox.name= ui->comboLabel->currentText();
-            bbox.x1 = x < cp_start.x ?x :cp_start.x;
-            bbox.y1 = y < cp_start.y ?y :cp_start.y;
-            bbox.x2 = x < cp_start.x ?cp_start.x :x;
-            bbox.y2 = y < cp_start.y ?cp_start.y :y;
+            bbox.x1 = x1;
+            bbox.y1 = y1;
+            bbox.x2 = x2;
+            bbox.y2 = y2;
             boxes.push_back(bbox);
             cp_start.button = 0;
         }
     }
+    ui->labelObjNum->setText(QString("object num :%1").arg(boxes.size()));
 }
 
 void photoclipping::updatescene()
@@ -180,14 +179,24 @@ void photoclipping::updatescene()
                          ,QPen(QColor(100,150,250),2));
         if(ui->spinSize->value()==2)
         {
-            scene.addLine(c_point.x-80, c_point.y, c_point.x+80, c_point.y,QPen(QColor(100,150,250)));
-            scene.addLine(c_point.x,c_point.y-80, c_point.x, c_point.y+80, QPen(QColor(100,150,250)));
+            scene.addLine(c_point.x-50, c_point.y, c_point.x+50, c_point.y,QPen(QColor(100,150,250)));
+            scene.addLine(c_point.x,c_point.y-50, c_point.x, c_point.y+50, QPen(QColor(100,150,250)));
+            /*
             scene.addLine(c_point.x-80, c_point.y-80, c_point.x+80, c_point.y+80,QPen(QColor(100,150,250)));
             scene.addLine(c_point.x-80,c_point.y+80, c_point.x+80, c_point.y-80, QPen(QColor(100,150,250)));
+            */
         }
-        ui->labelPreview->setPixmap(myq.MatBGR2pixmap(img_now).copy(c_point.x - ui->spinSize->value()/2
-                                                                    ,c_point.y - ui->spinSize->value()/2
-                                                                    ,ui->spinSize->value(),ui->spinSize->value()));
+        int x1 = c_point.x - ui->spinSize->value()/2;
+        int x2 = c_point.x + ui->spinSize->value()/2;
+        int y1 = c_point.y - ui->spinSize->value()/2;
+        int y2 = c_point.y + ui->spinSize->value()/2;
+        CorrectCoordinatesOfOutside(x1,y1);
+        CorrectCoordinatesOfOutside(x2,y2);
+        cv::Mat pre = cv::Mat(img_now,cv::Rect(cv::Point(x1,y1)
+                                               ,cv::Point(x2,y2)
+                                               ));
+        cv::resize(pre,pre,cv::Size(100,100));
+        ui->labelPreview->setPixmap(myq.MatBGR2pixmap(pre));
     }
     if(ui->comboMethod->currentText() == "Rect")
     {
@@ -205,17 +214,32 @@ void photoclipping::updatescene()
         int b = ((boxes[i].cls+3)%3)==1 ?255:0;
         if(boxes[i].cls > 2)
         {
-            r = r/(boxes[i].cls+3/3);
-            g = g/(boxes[i].cls+3/3);
-            b = b/(boxes[i].cls+3/3);
+            r = (r==0) ?255-(255*((float)boxes[i].cls/10)):r;
+            g = (g==0) ?255-(255*((float)boxes[i].cls/10)):g;
+            b = (b==0) ?255-(255*((float)boxes[i].cls/10)):b;
         }
         scene.addRect(QRect(QPoint(boxes[i].x1, boxes[i].y1),QPoint(boxes[i].x2,boxes[i].y2)),QPen(QColor(r,g,b),2));
-        //scene.addText(boxes[i].name,QFont("Arial",12,QFont::Bold));
+        QGraphicsTextItem *label = scene.addText(QString("%1 ").arg(i)+ boxes[i].name,QFont("Arial",12,QFont::Bold));
+        label->setPos(QPoint(boxes[i].x1,boxes[i].y2));
+        label->setDefaultTextColor(QColor(r,g,b));
     }
 }
 
 void photoclipping::onPushNext()
 {
+    for(int i=0; i<boxes.size();i++)
+    {
+        annos->addObject(boxes[i].name,boxes[i].cls,boxes[i].x1,boxes[i].y1,boxes[i].x2,boxes[i].y2);
+        annos->addObject(boxes[i].cls
+                        ,((float)(boxes[i].x1+boxes[i].x2)/2)/img_now.cols
+                        ,((float)(boxes[i].x1+boxes[i].y2)/2)/img_now.rows
+                        ,(float)(boxes[i].x2-boxes[i].x1)/img_now.cols
+                        ,(float)(boxes[i].y2+boxes[i].y1)/img_now.rows
+                         );
+    }
+    boxes.clear();
+    annos->pushBack();
+    annos->flashAll();
     count++;
     if(count < imglist.size())
     {
@@ -235,8 +259,13 @@ void photoclipping::onPushNext()
                                    .arg(imglist.size())
                                    );
     }
+    std::vector<QString> labels;
+    for(int i=0;i<ui->comboLabel->count();i++)
+    {
+        labels.push_back(ui->comboLabel->itemText(i));
+    }
+    annos->setHeader(img_now,imglist[count].fileName(),labels);
     ui->pushBack->setEnabled(TRUE);
-    boxes.clear();
 }
 
 void photoclipping::onPushBack()
@@ -260,10 +289,14 @@ void photoclipping::onPushBack()
     boxes.clear();
 }
 
-void photoclipping::currentIndexChangedLabel()
+void photoclipping::onPushClear()
 {
-    QDir dir = myq.makeDirectory(ui->comboSaveto->currentText(),ui->comboLabel->currentText());
-    save_count = myq.scanFiles(dir.path(), "*.png").size();
+    if(boxes.size())
+    {
+        boxes.pop_back();
+    }
+    ui->labelObjNum->setText(QString("object num :%1").arg(boxes.size()));
+    updatescene();
 }
 
 int photoclipping::drawImage(QString filepath)
@@ -291,8 +324,8 @@ void photoclipping::CorrectCoordinatesOfOutside(int &x, int &y)
 */
     x = (x >= 0) ?x:0;
     y = (y >= 0) ?y:0;
-    x = (x < img_now.cols) ?x:img_now.cols-1;
-    y = (y < img_now.rows) ?y:img_now.rows-1;
+    x = (x <= img_now.cols) ?x:img_now.cols-1;
+    y = (y <= img_now.rows) ?y:img_now.rows-1;
 }
 
 void photoclipping::photoSaveImage(cv::Mat src)
@@ -319,7 +352,7 @@ void photoclipping::photoSaveImage(cv::Mat src)
 
 void photoclipping::outputtxt()
 {
-    annos->flashAll();
+    ;
 }
 
 void photoclipping::wheelEvent(QWheelEvent *pEvent)
