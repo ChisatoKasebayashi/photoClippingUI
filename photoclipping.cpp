@@ -91,7 +91,6 @@ void photoclipping::setLabels()
 
 void photoclipping::setFileList(QString dirpath)
 {
-    qDebug() << "setFileList";
     ui->lineSelectFolder->setText(dirpath);
     working_directory.setCurrent(dirpath);
     imglist = myq.scanFiles(dirpath,"*.png");
@@ -118,19 +117,22 @@ void photoclipping::onMouseMovedGraphicsImage(int x,int y ,Qt::MouseButton butto
 
 void photoclipping::onMousePressdGraphicsImage(int x, int y, Qt::MouseButton button)
 {
-    if(ui->comboMethod->currentText() == "Rect")
+    if(count < imglist.size() && button == Qt::LeftButton)
     {
-        cp_start.x = x;
-        cp_start.y = y;
-        cp_start.button = 1;
+        if(ui->comboMethod->currentText() == "Rect")
+        {
+            cp_start.x = x;
+            cp_start.y = y;
+            cp_start.button = 1;
+        }
     }
 }
 
 void photoclipping::onMouseReleasedGraphicImage(int x, int y ,Qt::MouseButton button)
 {
-    if(ui->comboMethod->currentText() == "Point")
+    if(count < imglist.size() && button == Qt::LeftButton)
     {
-        if(count < imglist.size() && button == Qt::LeftButton)
+        if(ui->comboMethod->currentText() == "Point")
         {
             CorrectCoordinatesOfOutside(x,y);
             object_bbox bbox;
@@ -148,31 +150,31 @@ void photoclipping::onMouseReleasedGraphicImage(int x, int y ,Qt::MouseButton bu
             bbox.y2 = y2;
             boxes.push_back(bbox);
         }
-        else if(button == Qt::RightButton)
+        if(ui->comboMethod->currentText() == "Rect")
         {
-            onPushNext();
+            if(cp_start.button == 1)
+            {
+                object_bbox bbox;
+                int x1 = x < cp_start.x ?x :cp_start.x;
+                int y1 = y < cp_start.y ?y :cp_start.y;
+                int x2 = x < cp_start.x ?cp_start.x :x;
+                int y2 = y < cp_start.y ?cp_start.y :y;
+                CorrectCoordinatesOfOutside(x1,y1);
+                CorrectCoordinatesOfOutside(x2,y2);
+                bbox.cls = ui->comboLabel->currentIndex();
+                bbox.name= ui->comboLabel->currentText();
+                bbox.x1 = x1;
+                bbox.y1 = y1;
+                bbox.x2 = x2;
+                bbox.y2 = y2;
+                boxes.push_back(bbox);
+                cp_start.button = 0;
+            }
         }
     }
-    if(ui->comboMethod->currentText() == "Rect")
+    if(button == Qt::RightButton)
     {
-        if(cp_start.button == 1)
-        {
-            object_bbox bbox;
-            int x1 = x < cp_start.x ?x :cp_start.x;
-            int y1 = y < cp_start.y ?y :cp_start.y;
-            int x2 = x < cp_start.x ?cp_start.x :x;
-            int y2 = y < cp_start.y ?cp_start.y :y;
-            CorrectCoordinatesOfOutside(x1,y1);
-            CorrectCoordinatesOfOutside(x2,y2);
-            bbox.cls = ui->comboLabel->currentIndex();
-            bbox.name= ui->comboLabel->currentText();
-            bbox.x1 = x1;
-            bbox.y1 = y1;
-            bbox.x2 = x2;
-            bbox.y2 = y2;
-            boxes.push_back(bbox);
-            cp_start.button = 0;
-        }
+        onPushNext();
     }
     ui->labelObjNum->setText(QString("object num :%1").arg(boxes.size()));
 }
@@ -253,9 +255,12 @@ void photoclipping::onPushNext()
                         ,(float)(boxes[i].y2+boxes[i].y1)/img_now.rows
                          );
     }
+    if(boxes.size())
+    {
+        annos->pushBack();
+        annos->flashAll();
+    }
     boxes.clear();
-    annos->pushBack();
-    annos->flashAll();
     count++;
     if(count < imglist.size())
     {
