@@ -73,11 +73,25 @@ void photoclipping::onPushSaveto()
     QDir dir = myq.selectDir();
     ui->comboSaveto->insertItem(0,dir.path());
     ui->comboSaveto->setCurrentIndex(0);
+    delete(annos);
     annos = new Annotations(dir);
+    setLabels();
+}
+
+void photoclipping::setLabels()
+{
+    std::vector<QString> labels;
+    for(int i=0;i<ui->comboLabel->count();i++)
+    {
+        labels.push_back(ui->comboLabel->itemText(i));
+    }
+    if(imglist.size())
+        annos->setHeader(img_now,imglist[count].fileName(),labels);
 }
 
 void photoclipping::setFileList(QString dirpath)
 {
+    qDebug() << "setFileList";
     ui->lineSelectFolder->setText(dirpath);
     working_directory.setCurrent(dirpath);
     imglist = myq.scanFiles(dirpath,"*.png");
@@ -88,13 +102,6 @@ void photoclipping::setFileList(QString dirpath)
     }
     RecentImg.resize(imglist.size());
     ui->labelImageNum->setText(QString("%1 / %2").arg(imglist.size()).arg(imglist.size()));
-    std::vector<QString> labels;
-    for(int i=0;i<ui->comboLabel->count();i++)
-    {
-        labels.push_back(ui->comboLabel->itemText(i));
-    }
-    if(imglist.size())
-        annos->setHeader(img_now,imglist[count].fileName(),labels);
 }
 
 void photoclipping::onMouseMovedGraphicsImage(int x,int y ,Qt::MouseButton button)
@@ -268,12 +275,7 @@ void photoclipping::onPushNext()
                                    .arg(imglist.size())
                                    );
     }
-    std::vector<QString> labels;
-    for(int i=0;i<ui->comboLabel->count();i++)
-    {
-        labels.push_back(ui->comboLabel->itemText(i));
-    }
-    annos->setHeader(img_now,imglist[count].fileName(),labels);
+    setLabels();
     ui->pushBack->setEnabled(TRUE);
 }
 

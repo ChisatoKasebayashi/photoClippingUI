@@ -70,6 +70,7 @@ private:
     QDir working_directory;
     void updatescene();
     Annotations *annos;
+    void setLabels();
 };
 
 #endif // PHOTOCLIPPING_H
