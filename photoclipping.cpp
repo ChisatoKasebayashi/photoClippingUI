@@ -24,12 +24,6 @@ photoclipping::photoclipping(QWidget *parent) :
         ui->comboSaveto->insertItem(0, saveto);
         ui->comboSaveto->setCurrentIndex(0);
         annos = new Annotations(QDir(saveto));
-        std::vector<QString> labels;
-        for(int i=0;i<ui->comboLabel->count();i++)
-        {
-            labels.push_back(ui->comboLabel->itemText(i));
-        }
-        annos->setHeader(img_now,imglist[count].fileName(),labels);
     }
 }
 
@@ -45,15 +39,23 @@ photoclipping::~photoclipping()
 
 void photoclipping::connectSignals()
 {
-    connect(ui->pushSelectFolder, SIGNAL(clicked()), this, SLOT(onPushSelectFolder()));
-    connect(ui->graphicsImage, SIGNAL(mouseMoved(int,int ,Qt::MouseButton)), this, SLOT(onMouseMovedGraphicsImage(int,int ,Qt::MouseButton)));
-    connect(ui->graphicsImage, SIGNAL(mouseReleased(int,int, Qt::MouseButton)), this, SLOT(onMouseReleasedGraphicImage(int,int, Qt::MouseButton)));
-    connect(ui->graphicsImage, SIGNAL(mousePressed(int,int,Qt::MouseButton)), this, SLOT(onMousePressdGraphicsImage(int,int,Qt::MouseButton)));
-    connect(ui->pushNext, SIGNAL(clicked()), this, SLOT(onPushNext()));
-    connect(ui->pushBack, SIGNAL(clicked()), this, SLOT(onPushBack()));
-    connect(ui->pushClear, SIGNAL(clicked()), this, SLOT(onPushClear()));
-    connect(ui->pushSaveto, SIGNAL(clicked()), this, SLOT(onPushSaveto()));
-    connect(ui->comboLabel, SIGNAL(currentIndexChanged(int)),this, SLOT(currentIndexChangedLabel()));
+    int ret;
+    ret = connect(ui->pushSelectFolder, SIGNAL(clicked()), this, SLOT(onPushSelectFolder()));
+    assert(ret);
+    ret = connect(ui->graphicsImage, SIGNAL(mouseMoved(int,int ,Qt::MouseButton)), this, SLOT(onMouseMovedGraphicsImage(int,int ,Qt::MouseButton)));
+    assert(ret);
+    ret = connect(ui->graphicsImage, SIGNAL(mouseReleased(int,int, Qt::MouseButton)), this, SLOT(onMouseReleasedGraphicImage(int,int, Qt::MouseButton)));
+    assert(ret);
+    ret = connect(ui->graphicsImage, SIGNAL(mousePressed(int,int,Qt::MouseButton)), this, SLOT(onMousePressdGraphicsImage(int,int,Qt::MouseButton)));
+    assert(ret);
+    ret = connect(ui->pushNext, SIGNAL(clicked()), this, SLOT(onPushNext()));
+    assert(ret);
+    ret = connect(ui->pushBack, SIGNAL(clicked()), this, SLOT(onPushBack()));
+    assert(ret);
+    ret = connect(ui->pushClear, SIGNAL(clicked()), this, SLOT(onPushClear()));
+    assert(ret);
+    ret = connect(ui->pushSaveto, SIGNAL(clicked()), this, SLOT(onPushSaveto()));
+    assert(ret);
 }
 
 void photoclipping::onPushSelectFolder()
@@ -86,6 +88,13 @@ void photoclipping::setFileList(QString dirpath)
     }
     RecentImg.resize(imglist.size());
     ui->labelImageNum->setText(QString("%1 / %2").arg(imglist.size()).arg(imglist.size()));
+    std::vector<QString> labels;
+    for(int i=0;i<ui->comboLabel->count();i++)
+    {
+        labels.push_back(ui->comboLabel->itemText(i));
+    }
+    if(imglist.size())
+        annos->setHeader(img_now,imglist[count].fileName(),labels);
 }
 
 void photoclipping::onMouseMovedGraphicsImage(int x,int y ,Qt::MouseButton button)
