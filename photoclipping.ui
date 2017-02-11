@@ -245,11 +245,6 @@
          <string>Ball</string>
         </property>
        </item>
-       <item>
-        <property name="text">
-         <string>Goalpost</string>
-        </property>
-       </item>
       </widget>
      </item>
      <item>

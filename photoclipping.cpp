@@ -24,6 +24,7 @@ photoclipping::photoclipping(QWidget *parent) :
         ui->comboSaveto->insertItem(0, saveto);
         ui->comboSaveto->setCurrentIndex(0);
         annos = new Annotations(QDir(saveto));
+        setLabels();
     }
 }
 

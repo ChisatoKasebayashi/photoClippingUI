@@ -22,6 +22,7 @@ Annotations::~Annotations()
 
 void Annotations::setFlags()
 {
+    TXT = true;
     YOLO = true;
     FasterRCNN = true;
     SSD = false;
@@ -29,6 +30,11 @@ void Annotations::setFlags()
 
 void Annotations::popBack()
 {
+    if(TXT)
+    {
+        if(txt_db.size())
+            txt_db.pop_back();
+    }
     if(YOLO)
     {
         if(yolo_db.size())
@@ -84,7 +90,7 @@ void Annotations::setHeader(cv::Mat src, QString imgname, std::vector<QString> l
     }
 }
 
-void Annotations::addObject(int cls, float cx, float cy, float w, float h)
+void Annotations::addObject(int cls, float cx, float cy, float w, float h) // YOLO
 {
     if(YOLO)
     {
@@ -102,8 +108,14 @@ void Annotations::addObject(int cls, float cx, float cy, float w, float h)
     }
 }
 
-void Annotations::addObject(QString objectName, int cls, int x1, int y1, int x2, int y2)
+void Annotations::addObject(QString objectName, int cls, int x1, int y1, int x2, int y2) // FasterRCNN, txt
 {
+    qDebug() << "addObject - START";
+    if(TXT)
+    {
+        QString qst = QString("%1 %2 %3 %4 %5 %6").arg(objectName).arg(cls).arg(x1).arg(y1).arg(x2).arg(y2);
+        txt_db.push_back(qst);
+    }
     if(FasterRCNN)
     {
         frcnn_obj = new FORMAT_FRCNN_OBJECT;
@@ -120,6 +132,18 @@ void Annotations::addObject(QString objectName, int cls, int x1, int y1, int x2,
 
 void Annotations::flashAll()
 {
+    if(TXT)
+    {
+        QString filename;
+        filename = SaveDir.path() + "/Rects.txt";
+        for(int i=0; i<txt_db.size(); i++)
+        {
+            std::ofstream txt_ofs(filename.toLocal8Bit(),std::ios_base::app);
+            txt_ofs << txt_db[i].toStdString() << std::endl;
+            txt_ofs.close();
+        }
+        txt_db.clear();
+    }
     if(YOLO)
     {
         for(int i=0; i<yolo_db.size(); i++){
@@ -137,6 +161,7 @@ void Annotations::flashAll()
             }
             ofs.close();
         }
+        yolo_db.clear();
     }
     if(FasterRCNN)
     {
@@ -154,8 +179,7 @@ void Annotations::flashAll()
             }
             ofs.close();
         }
+        frcnn_db.clear();
     }
     if(SSD);
-    yolo_db.clear();
-    frcnn_db.clear();
 }

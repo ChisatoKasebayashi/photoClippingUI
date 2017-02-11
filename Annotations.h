@@ -15,6 +15,7 @@ public:
     Annotations(QDir dir);
     ~Annotations();
     QDir SaveDir;
+    bool TXT;
     bool YOLO;
     bool FasterRCNN;
     bool SSD;
@@ -59,6 +60,7 @@ private:
     FORMAT_FRCNN_OBJECT *frcnn_obj;
     FORMAT_YOLO_HEADER *yolo_hdr;
     FORMAT_YOLO_OBJECT *yolo_obj;
+    std::vector<QString> txt_db;
     std::vector<FORMAT_YOLO_HEADER> yolo_db;
     std::vector<FORMAT_FRCNN_HEADER> frcnn_db;
     MyQclass mq;
