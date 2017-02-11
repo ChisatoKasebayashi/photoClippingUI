@@ -8,7 +8,7 @@ photoclipping::photoclipping(QWidget *parent) :
     settings(QDir::homePath()+"/photoClipping.ini", QSettings::IniFormat),
     ui(new Ui::photoclipping)
 {
-    ui->setupUi(this);
+    ui->setupUi(this); 
     connectSignals();
     ui->graphicsImage->setScene(&scene);
     count = settings.value("SAVECOUNT",0).toInt();
@@ -28,7 +28,7 @@ photoclipping::photoclipping(QWidget *parent) :
     }
 }
 
-photoclipping::~photoclipping()
+photoclipping::~ photoclipping()
 {
     outputtxt();
     settings.setValue("SAVEDIR",ui->comboSaveto->currentText());
@@ -95,6 +95,7 @@ void photoclipping::setFileList(QString dirpath)
     ui->lineSelectFolder->setText(dirpath);
     working_directory.setCurrent(dirpath);
     imglist = myq.scanFiles(dirpath,"*.png");
+    imglist.append(myq.scanFiles(dirpath,"*.jpg"));
     ui->labelImageNum->setText(QString("%1 / %2").arg(count).arg(imglist.size()));
     if(count < imglist.size())
     {
