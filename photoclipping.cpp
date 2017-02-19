@@ -107,11 +107,12 @@ void photoclipping::setFileList(QString dirpath)
 
 void photoclipping::onMouseMovedGraphicsImage(int x,int y ,Qt::MouseButton button)
 {
+    int offset = 100;
     if(count < imglist.size())
     {
-        CorrectCoordinatesOfOutside(x,y);
-        c_point.x = x;
-        c_point.y = y;
+        c_point.x = x-offset;
+        c_point.y = y-offset;
+        CorrectCoordinatesOfOutside(c_point.x,c_point.y);
         ui->label_axis->setText(QString("x:%1 y:%2").arg(x).arg(y));
         updatescene();
     }
@@ -119,6 +120,8 @@ void photoclipping::onMouseMovedGraphicsImage(int x,int y ,Qt::MouseButton butto
 
 void photoclipping::onMousePressdGraphicsImage(int x, int y, Qt::MouseButton button)
 {
+    x = c_point.x;
+    y = c_point.y;
     if(count < imglist.size() && button == Qt::LeftButton)
     {
         if(ui->comboMethod->currentText() == "Rect")
@@ -132,11 +135,12 @@ void photoclipping::onMousePressdGraphicsImage(int x, int y, Qt::MouseButton but
 
 void photoclipping::onMouseReleasedGraphicImage(int x, int y ,Qt::MouseButton button)
 {
+    x = c_point.x;
+    y = c_point.y;
     if(count < imglist.size() && button == Qt::LeftButton)
     {
         if(ui->comboMethod->currentText() == "Point")
         {
-            CorrectCoordinatesOfOutside(x,y);
             object_bbox bbox;
             int x1 = x - ui->spinSize->value()/2;
             int y1 = y - ui->spinSize->value()/2;
@@ -293,6 +297,7 @@ void photoclipping::onPushBack()
     {
         ui->pushBack->setDisabled(TRUE);
         count=0;
+        ui->labelImageNum->setText(QString("%1 / %2").arg(imglist.size()).arg(imglist.size()));
     }
     else if(count > imglist.size()+1)
     {
@@ -303,6 +308,7 @@ void photoclipping::onPushBack()
         QFile::remove(RecentImg[count]);
         annos->popBack();
         drawImage(imglist[count].filePath());
+        ui->labelImageNum->setText(QString("%1 / %2").arg(imglist.size()-count).arg(imglist.size()));
     }
     boxes.clear();
 }
@@ -319,14 +325,15 @@ void photoclipping::onPushClear()
 
 int photoclipping::drawImage(QString filepath)
 {
+    int offset = 200;
     scene.clear();
     img_now = cv::imread(filepath.toStdString());
     if(img_now.empty())
         return 1;
     scene.addPixmap(myq.MatBGR2pixmap(img_now));
-    ui->graphicsImage->setMinimumSize(img_now.cols+200, img_now.rows+200);
-    ui->graphicsImage->setMaximumSize(img_now.cols+200, img_now.rows+200);
-    ui->spinSize->setMaximum(img_now.cols<img_now.rows?img_now.cols:img_now.rows);
+    ui->graphicsImage->setMinimumSize(img_now.cols+offset, img_now.rows+offset);
+    ui->graphicsImage->setMaximumSize(img_now.cols+offset, img_now.rows+offset);
+//    ui->spinSize->setMaximum(img_now.cols<img_now.rows?img_now.cols:img_now.rows);
     ui->labelFilename->setText(imglist[count].fileName());
     return 0;
 }
