@@ -61,10 +61,18 @@ bool photoclipping::eventFilter(QObject *obj, QEvent *event)
                if(keyEvent->text().toStdString() == "a")
                {
                     qDebug() << "key " << keyEvent->text() << "from" << obj;
+                    caffe_ofs << imglist[count].fileName().toStdString() << " " << 4 << std::endl;
+                    showNextImage();
                }
                else if(keyEvent->text().toStdString() == "d")
                {
                     qDebug() << "key " << keyEvent->text() << "from" << obj;
+                    caffe_ofs << imglist[count].fileName().toStdString() << " " << 5 << std::endl;
+                    showNextImage();
+               }
+               else
+               {
+
                }
                break;
            }
@@ -117,7 +125,7 @@ void photoclipping::setFileList(QString dirpath)
 {
     ui->lineSelectFolder->setText(dirpath);
     working_directory.setCurrent(dirpath);
-    imglist = myq.scanFiles(dirpath,"*.png");
+    imglist = myq.scanFiles(dirpath,"*.jpg");
     ui->labelImageNum->setText(QString("%1 / %2").arg(count).arg(imglist.size()));
     if(count < imglist.size())
     {
@@ -254,7 +262,7 @@ void photoclipping::onPushRevert()
 void photoclipping::currentIndexChangedLabel()
 {
     QDir dir = myq.makeDirectory(ui->comboSaveto->currentText(),ui->comboLabel->currentText());
-    save_count = myq.scanFiles(dir.path(), "*.png").size();
+    save_count = myq.scanFiles(dir.path(), "*.jpg").size();
 }
 
 int photoclipping::drawImage(QString filepath)
