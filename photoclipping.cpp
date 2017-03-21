@@ -58,6 +58,14 @@ bool photoclipping::eventFilter(QObject *obj, QEvent *event)
                showNextImage();
                break;
            default:
+               if(keyEvent->text().toStdString() == "a")
+               {
+                    qDebug() << "key " << keyEvent->text() << "from" << obj;
+               }
+               else if(keyEvent->text().toStdString() == "d")
+               {
+                    qDebug() << "key " << keyEvent->text() << "from" << obj;
+               }
                break;
            }
 
