@@ -25,6 +25,39 @@ photoclipping::photoclipping(QWidget *parent) :
         myq.makeDirectory(saveto, "YOLO_Annotations");
     }
     currentIndexChangedLabel();
+    caffe_ofs.open("train.txt");
+    qApp->installEventFilter(this);
+}
+bool photoclipping::eventFilter(QObject *obj, QEvent *event)
+{
+    if (event->type() == QEvent::KeyPress)
+    {
+        QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
+           //qDebug() << "key " << keyEvent->key() << "from" << obj;
+           //qDebug() << "key " << keyEvent->text() << "from" << obj;
+           switch(keyEvent->key())
+           {
+           case Qt::Key_Up:
+               qDebug() << "UP";
+               caffe_ofs << imglist[count].fileName().toStdString() << " " << 0 << std::endl;
+               break;
+           case Qt::Key_Down:
+               qDebug() << "DOWN";
+               caffe_ofs << imglist[count].fileName().toStdString() << " " << 1 << std::endl;
+               break;
+           case Qt::Key_Right:
+               qDebug() << "RIGHT";
+               caffe_ofs << imglist[count].fileName().toStdString() << " " << 2 << std::endl;
+               break;
+           case Qt::Key_Left:
+               qDebug() << "LEFT";
+               caffe_ofs << imglist[count].fileName().toStdString() << " " << 3 << std::endl;
+               break;
+           default:
+               break;
+           }
+
+    }
 }
 
 photoclipping::~photoclipping()
@@ -34,6 +67,7 @@ photoclipping::~photoclipping()
     settings.setValue("IMAGEDIR",ui->lineSelectFolder->text());
     settings.setValue("SAVECOUNT",count);
     delete ui;
+    caffe_ofs.close();
 }
 
 void photoclipping::connectSignals()

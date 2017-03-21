@@ -24,6 +24,7 @@ public:
     void CorrectCoordinatesOfOutside(int &x, int &y);
     void photoSaveImage(cv::Mat src);
     void setFileList(QString dirpath);
+    std::ofstream caffe_ofs;
 
 private slots:
     void onPushSelectFolder();
@@ -80,6 +81,8 @@ private:
     }c_point;
     QDir working_directory;
     void updatescene();
+protected:
+    bool eventFilter(QObject *obj, QEvent *event);
 };
 
 #endif // PHOTOCLIPPING_H
