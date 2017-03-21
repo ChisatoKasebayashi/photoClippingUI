@@ -81,6 +81,7 @@ private:
     }c_point;
     QDir working_directory;
     void updatescene();
+    void showNextImage();
 protected:
     bool eventFilter(QObject *obj, QEvent *event);
 };

@@ -40,18 +40,22 @@ bool photoclipping::eventFilter(QObject *obj, QEvent *event)
            case Qt::Key_Up:
                qDebug() << "UP";
                caffe_ofs << imglist[count].fileName().toStdString() << " " << 0 << std::endl;
+               showNextImage();
                break;
            case Qt::Key_Down:
                qDebug() << "DOWN";
                caffe_ofs << imglist[count].fileName().toStdString() << " " << 1 << std::endl;
+               showNextImage();
                break;
            case Qt::Key_Right:
                qDebug() << "RIGHT";
                caffe_ofs << imglist[count].fileName().toStdString() << " " << 2 << std::endl;
+               showNextImage();
                break;
            case Qt::Key_Left:
                qDebug() << "LEFT";
                caffe_ofs << imglist[count].fileName().toStdString() << " " << 3 << std::endl;
+               showNextImage();
                break;
            default:
                break;
@@ -272,6 +276,18 @@ void photoclipping::CorrectCoordinatesOfOutside(int &x, int &y)
     x = (x < img_now.cols) ?x:img_now.cols-1;
     y = (y < img_now.rows) ?y:img_now.rows-1;
 */
+}
+
+void photoclipping::showNextImage()
+{
+    count++;
+    if(count < imglist.size())
+    {
+        drawImage(imglist[count].filePath());
+        ui->labelImageNum->setText(QString("%1 / %2").arg(imglist.size()-count).arg(imglist.size()));
+    }
+    else
+    {}
 }
 
 void photoclipping::photoSaveImage(cv::Mat src)
